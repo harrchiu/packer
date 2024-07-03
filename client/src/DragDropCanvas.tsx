@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { SHAPE_COLORS } from './styles';
 
 export interface ISquare {
   x: number;
@@ -23,6 +24,7 @@ const DragDropCanvas: React.FC<{
     const canvas: HTMLCanvasElement = canvasRef.current;
     const ctx = canvas.getContext('2d');
     drawSquares(ctx, squares);
+    console.log(squares)
   }, [squares]);
 
   const getShapesBoundingBoxArea = () => {
@@ -34,10 +36,10 @@ const DragDropCanvas: React.FC<{
   // @ts-ignore
   const drawSquares = (ctx, squares) => {
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height); // Clear the canvas
-    ctx.fillStyle = 'blue';
-
+    
     for (let i = 0; i < squares.length; i++) {
       const square = squares[i];
+      ctx.fillStyle = SHAPE_COLORS[i % SHAPE_COLORS.length];
       ctx.fillRect(square.x, square.y, square.size, square.size);
     }
 
@@ -89,38 +91,58 @@ const DragDropCanvas: React.FC<{
     return { x1, y1, x2, y2 };
   };
 
+  const detectOverlap = (x: number, y: number, size: number, staticSquare: ISquare) => {
+    return x < staticSquare.x + staticSquare.size && x + size > staticSquare.x &&
+           y < staticSquare.y + staticSquare.size && y + size > staticSquare.y;
+  }
+  const detectAllShapesOverlap = (movingSquare: ISquare, squareIndex: number) => {
+    for (let i = 0; i < squares.length; i++) {
+      if (i === squareIndex) {
+        continue;
+      }
+      const otherSquare = squares[i];
+      if (detectOverlap(movingSquare.x, movingSquare.y, movingSquare.size, otherSquare)) {
+        return true
+      }
+    }
+    return false
+  }
+
   const handleMouseMove = (e: any) => {
-    if (isDragging && canvasRef?.current) {
+    if (isDragging !== null && canvasRef?.current) {
       //@ts-ignore
       const rect = canvasRef.current.getBoundingClientRect();
       const mouseX = e.clientX - rect.left;
       const mouseY = e.clientY - rect.top;
 
       const square = squares[isDragging];
-      const squareObj = {
-        ...square,
-        x: mouseX - startDragOffset.x,
-        y: mouseY - startDragOffset.y,
-      };
-
-      // check if square is overlapping any other square
-      for (let i = 0; i < squares.length; i++) {
-        if (i === isDragging) {
-          continue;
-        }
-        const otherSquare = squares[i];
-        if (
-          squareObj.x < otherSquare.x + otherSquare.size &&
-          squareObj.x + squareObj.size > otherSquare.x &&
-          squareObj.y < otherSquare.y + otherSquare.size &&
-          squareObj.y + squareObj.size > otherSquare.y
-        ) {
-          return;
-        }
-      }
+      const newSquareX = Math.floor(mouseX - startDragOffset.x)
+      const newSquareY = Math.floor(mouseY - startDragOffset.y)
 
       const newSquares = [...squares];
-      newSquares[isDragging] = squareObj;
+      newSquares[isDragging] = {
+        ...square, 
+        // x: canMoveX ? newSquareX : square.x,
+        // y: canMoveY ? newSquareY : square.y
+      }
+
+      // check if square is overlapping any other square
+      const dX = (newSquareX - square.x) < 0 ? -1 : 1
+      const dY = (newSquareY - square.y) < 0 ? -1 : 1
+      for (let deltaX = newSquareX - square.x; deltaX != 0; deltaX -= dX) {
+        const testSquareX = square.x + deltaX
+        if (!detectAllShapesOverlap({...square, x: testSquareX}, isDragging)) {
+          newSquares[isDragging].x = testSquareX
+          break;
+        }
+      }
+      for (let deltaY = newSquareY - square.y; deltaY != 0; deltaY -= dY) {
+        const testSquareY = square.y + deltaY
+        if (!detectAllShapesOverlap({...square, y: testSquareY}, isDragging)) {
+          newSquares[isDragging].y = testSquareY
+          break;
+        }
+      }
 
       setSquares(newSquares);
     }
@@ -134,7 +156,7 @@ const DragDropCanvas: React.FC<{
   const viewportHeight = window.innerHeight;
 
   return (
-    <>
+    <div style={{}}>
       <div
         style={{
           position: 'absolute',
@@ -172,7 +194,7 @@ const DragDropCanvas: React.FC<{
         onMouseOut={handleMouseUp} // Stop dragging when mouse leaves the canvas
         style={{ border: '1px solid black', width: '100%', height: '100%' }}
       />
-    </>
+    </div>
   );
 };
 

@@ -17,17 +17,33 @@ function App() {
   };
   const [squares, setSquares] = useState<ISquare[]>(
     [
-      // {
-      //   x: 200,
-      //   y: 200,
-      //   size: 50,
-      // },
-    ] || randomSquares()
+      {
+        x: 0,
+        y: 0,
+        size: 50,
+      },
+      {
+        x: 70,
+        y: 70,
+        size: 100,
+      },
+      {
+        x: 200,
+        y: 200,
+        size: 70,
+      },
+      {
+        x: 300,
+        y: 300,
+        size: 70,
+      },
+    ] 
+    || randomSquares()
   );
 
-  useEffect(() => {
-    setSquares(randomSquares());
-  }, []);
+  // useEffect(() => {
+  //   setSquares(randomSquares());
+  // }, []);
 
   return (
     <>
