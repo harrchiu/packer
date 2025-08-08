@@ -6,39 +6,21 @@ function App() {
   // randomly generate squares and set
   const randomSquares = () => {
     const newSquares = [];
-    for (let i = 0; i < 3; i++) {
-      newSquares.push({
-        x: Math.random() * 500,
-        y: Math.random() * 500,
-        size: Math.random() * 100 + 50,
-      });
+    let xy = 100;
+    for (let i = 0; i < 5; i++) {
+      const newSquare = {
+        x: xy,
+        y: xy,
+        size: Math.floor(Math.random() * 50) + 10,
+      };
+      newSquares.push(newSquare);
+      xy += newSquare.size + 25;
     }
     return newSquares;
   };
   const [squares, setSquares] = useState<ISquare[]>(
-    [
-      {
-        x: 0,
-        y: 0,
-        size: 50,
-      },
-      {
-        x: 70,
-        y: 70,
-        size: 100,
-      },
-      {
-        x: 200,
-        y: 200,
-        size: 70,
-      },
-      {
-        x: 300,
-        y: 300,
-        size: 70,
-      },
-    ] 
-    || randomSquares()
+    // [] ||
+    randomSquares()
   );
 
   // useEffect(() => {

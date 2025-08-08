@@ -24,19 +24,20 @@ const DragDropCanvas: React.FC<{
     const canvas: HTMLCanvasElement = canvasRef.current;
     const ctx = canvas.getContext('2d');
     drawSquares(ctx, squares);
-    console.log(squares)
   }, [squares]);
 
   const getShapesBoundingBoxArea = () => {
-    const area =
+    let area =
       (shapesBoundingBox.x2 - shapesBoundingBox.x1) * (shapesBoundingBox.y2 - shapesBoundingBox.y1);
+    area /= 1000;
+
     return area;
   };
 
   // @ts-ignore
   const drawSquares = (ctx, squares) => {
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height); // Clear the canvas
-    
+
     for (let i = 0; i < squares.length; i++) {
       const square = squares[i];
       ctx.fillStyle = SHAPE_COLORS[i % SHAPE_COLORS.length];
@@ -46,8 +47,9 @@ const DragDropCanvas: React.FC<{
     const newShapesBoundingBox = getShapesBoundingBox(squares);
     setShapesBoundingBox(newShapesBoundingBox);
     const minArea = Math.min(bestArea || Infinity, getShapesBoundingBoxArea());
-    console.log(minArea);
-    setBestArea(minArea);
+    if (minArea != 0) {
+      setBestArea(minArea);
+    }
 
     const { x1, y1, x2, y2 } = shapesBoundingBox;
     ctx.strokeStyle = 'red';
@@ -92,9 +94,13 @@ const DragDropCanvas: React.FC<{
   };
 
   const detectOverlap = (x: number, y: number, size: number, staticSquare: ISquare) => {
-    return x < staticSquare.x + staticSquare.size && x + size > staticSquare.x &&
-           y < staticSquare.y + staticSquare.size && y + size > staticSquare.y;
-  }
+    return (
+      x < staticSquare.x + staticSquare.size &&
+      x + size > staticSquare.x &&
+      y < staticSquare.y + staticSquare.size &&
+      y + size > staticSquare.y
+    );
+  };
   const detectAllShapesOverlap = (movingSquare: ISquare, squareIndex: number) => {
     for (let i = 0; i < squares.length; i++) {
       if (i === squareIndex) {
@@ -102,11 +108,11 @@ const DragDropCanvas: React.FC<{
       }
       const otherSquare = squares[i];
       if (detectOverlap(movingSquare.x, movingSquare.y, movingSquare.size, otherSquare)) {
-        return true
+        return true;
       }
     }
-    return false
-  }
+    return false;
+  };
 
   const handleMouseMove = (e: any) => {
     if (isDragging !== null && canvasRef?.current) {
@@ -116,30 +122,30 @@ const DragDropCanvas: React.FC<{
       const mouseY = e.clientY - rect.top;
 
       const square = squares[isDragging];
-      const newSquareX = Math.floor(mouseX - startDragOffset.x)
-      const newSquareY = Math.floor(mouseY - startDragOffset.y)
+      const newSquareX = Math.floor(mouseX - startDragOffset.x);
+      const newSquareY = Math.floor(mouseY - startDragOffset.y);
 
       const newSquares = [...squares];
       newSquares[isDragging] = {
-        ...square, 
+        ...square,
         // x: canMoveX ? newSquareX : square.x,
         // y: canMoveY ? newSquareY : square.y
-      }
+      };
 
       // check if square is overlapping any other square
-      const dX = (newSquareX - square.x) < 0 ? -1 : 1
-      const dY = (newSquareY - square.y) < 0 ? -1 : 1
+      const dX = newSquareX - square.x < 0 ? -1 : 1;
+      const dY = newSquareY - square.y < 0 ? -1 : 1;
       for (let deltaX = newSquareX - square.x; deltaX != 0; deltaX -= dX) {
-        const testSquareX = square.x + deltaX
-        if (!detectAllShapesOverlap({...square, x: testSquareX}, isDragging)) {
-          newSquares[isDragging].x = testSquareX
+        const testSquareX = square.x + deltaX;
+        if (!detectAllShapesOverlap({ ...square, x: testSquareX }, isDragging)) {
+          newSquares[isDragging].x = testSquareX;
           break;
         }
       }
       for (let deltaY = newSquareY - square.y; deltaY != 0; deltaY -= dY) {
-        const testSquareY = square.y + deltaY
-        if (!detectAllShapesOverlap({...square, y: testSquareY}, isDragging)) {
-          newSquares[isDragging].y = testSquareY
+        const testSquareY = square.y + deltaY;
+        if (!detectAllShapesOverlap({ ...square, y: testSquareY }, isDragging)) {
+          newSquares[isDragging].y = testSquareY;
           break;
         }
       }
@@ -179,9 +185,9 @@ const DragDropCanvas: React.FC<{
             // color: 'grey',
           }}
         >
-          Area: {getShapesBoundingBoxArea().toFixed(2)} <br />
+          Area: {getShapesBoundingBoxArea().toFixed(1)} <br />
           {/* <span style={{ fontWeight: 'bold' }}>Best:</span>&nbsp; */}
-          Best: {bestArea?.toFixed(2) || 0 > 0 || '-'}
+          Best: {bestArea?.toFixed(1) || 0 > 0 || '-'}
         </div>
       </div>
       <canvas
